@@ -1,0 +1,32 @@
+# Coloque este arquivo em .github/workflows/atualizar-ofertas.yml
+name: Atualizar ofertas
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # todo dia, 06:00 no horário de Brasília
+  workflow_dispatch:       # permite rodar manualmente
+
+permissions:
+  contents: write
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install anthropic
+      - run: python atualizar_ofertas.py
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - name: Salvar alterações
+        run: |
+          git config user.name "ofertas-bot"
+          git config user.email "ofertas-bot@users.noreply.github.com"
+          git add ofertas.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Atualiza ofertas"
+            git push
+          fi
